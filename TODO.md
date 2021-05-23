@@ -1,0 +1,3 @@
+- Image size has an effect on tesseract performances !
+- Not urgent but could be nice: train on custom font: https://pretius.com/how-to-prepare-training-files-for-tesseract-ocr-and-improve-characters-recognition/
+- bold and not bold: might be useful to know who is category
