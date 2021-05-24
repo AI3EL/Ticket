@@ -1,3 +1,10 @@
 - Image size has an effect on tesseract performances !
 - Not urgent but could be nice: train on custom font: https://pretius.com/how-to-prepare-training-files-for-tesseract-ocr-and-improve-characters-recognition/
+- maybe better source to training: https://tesseract-ocr.github.io/tessdoc/tess4/TrainingTesseract-4.00.html
 - bold and not bold: might be useful to know who is category
+- pytesseract.run_and_get_output doesn't work (Aucun fichier ou dossier de ce type: '/tmp/tess_5m7e7n6r.')
+- https://stackoverflow.com/questions/54761638/what-is-the-difference-between-pytesseract-and-tesserocr: tesserocr looks better
+- Tesserocr: could allow to access other letter confidences ? Maybe later ? But then cost to change ...
+- Tried tesserocr but doesn't work
+- scatterplot on left, top to know who is T, price, title, etc ...
+- problem: how to access individual letters (for instance remove smaller letters (when in line, their height is lost))? Maybe with tesserocr ? 

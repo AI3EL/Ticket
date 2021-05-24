@@ -1,5 +1,4 @@
 import cv2
-import pytesseract
 import numpy as np
 
 
@@ -12,7 +11,6 @@ def show(imgs, scale=1, names=None):
         cv2.imshow(name, resize(img, scale))
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-
 
 def thresholding(image):
     return cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
@@ -42,11 +40,3 @@ def to_bin(img, ksize=1):
 def close(img, s):
     kernel = np.ones((s,s),np.uint8)
     return cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)
-
-
-def print_ocr(img, custom_config=r'-l fra --oem 3 --psm 6'):
-    print(get_ocr(img, custom_config))
-
-
-def get_ocr(img, custom_config=r'-l fra --oem 3 --psm 6'):
-    return pytesseract.image_to_string(img, config=custom_config)

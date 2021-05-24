@@ -5,8 +5,9 @@ import re
 PRODUCT_CATEGORIES = [
     'BOUCHERIE/TRAITEUR', 
     'ENTRETIEN/BAZAR', 
-    'EPICERIE /BOISSONS', 
+    'EPICERIE/BOISSONS', 
     'FRUITS/LEGUMES',
+    'SURGELES/PRODUITS FRAIS'
 ] 
 NUMBERS = list(map(str, range(10)))
 
