@@ -30,7 +30,7 @@ def blur(img, scale=5):
 
 def resize(img, scale):
     dsize = (np.array(img.shape)[:2]*scale).astype(int)
-    return cv2.resize(img, (dsize[1], dsize[0]))
+    return cv2.resize(img, (dsize[1], dsize[0]), interpolation=cv2.INTER_AREA)
 
 
 def to_bin(img, ksize=1):

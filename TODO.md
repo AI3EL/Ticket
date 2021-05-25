@@ -1,10 +1,28 @@
-- Image size has an effect on tesseract performances !
+
+### Custom Font
+
 - Not urgent but could be nice: train on custom font: https://pretius.com/how-to-prepare-training-files-for-tesseract-ocr-and-improve-characters-recognition/
 - maybe better source to training: https://tesseract-ocr.github.io/tessdoc/tess4/TrainingTesseract-4.00.html
 - bold and not bold: might be useful to know who is category
+
+### Better usage of tesseract
+
+- List of unauthorized characters for instance
 - pytesseract.run_and_get_output doesn't work (Aucun fichier ou dossier de ce type: '/tmp/tess_5m7e7n6r.')
-- https://stackoverflow.com/questions/54761638/what-is-the-difference-between-pytesseract-and-tesserocr: tesserocr looks better
-- Tesserocr: could allow to access other letter confidences ? Maybe later ? But then cost to change ...
-- Tried tesserocr but doesn't work
-- scatterplot on left, top to know who is T, price, title, etc ...
-- problem: how to access individual letters (for instance remove smaller letters (when in line, their height is lost))? Maybe with tesserocr ? 
+- try tesserocr but does not seem to work
+
+### Trailing dots
+
+- Not detecting Fruits in 1b.jpg: doesn't seem to be the homography's fault, maybe trailing dots that cramp the line processing
+- Detect category using trailing dots and bold font
+- Shift kernel beginning a bit ?
+
+### Other
+
+- implement word distance: issue that we have abrevitaions
+- Rethink removing trailing dots
+
+### Long term
+
+- Know the category of each object to infer category in case it was skipped
+- Curvy lines: https://stackoverflow.com/questions/28935983/preprocessing-image-for-tesseract-ocr-with-opencv

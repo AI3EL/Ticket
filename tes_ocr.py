@@ -3,10 +3,14 @@ import cv2
 from img_utils import get_color, show
 import matplotlib.pyplot as plt
 
+BASE_CONFIG = '-l fra --oem 3 --psm 6'
+TARGET_DPI = 300
+CONFIG = BASE_CONFIG + f' --dpi {TARGET_DPI:.0f}'
+
 
 def postprocess_ocr(df_ocr):
     df_ocr = rm_weird_height(df_ocr)
-    df_ocr = rm_above_title(df_ocr)
+    # df_ocr = rm_above_title(df_ocr)
     return df_ocr
 
 
@@ -36,27 +40,26 @@ def rm_above_title(df_ocr):
 
 
 def extract_text(df_ocr):
-    out = []
-    for line_id in sorted(df_ocr.line_num.unique()):
-        df_line_words = df_ocr[(df_ocr.line_num == line_id) & (df_ocr.level == 5)]
-        line_words = df_line_words.sort_values('left')['text']
-        out.append(' '.join(line_words))
-    return out
+    df_words = df_ocr[df_ocr.level==5].copy()
+    ids = ['page_num', 'par_num', 'block_num', 'line_num']
+    df_words['line_id'] = df_words.apply(lambda row: tuple(row[id] for id in ids), axis=1) 
+    df_words = df_words.sort_values(by=ids)
+    line_words = df_words.groupby('line_id').apply(lambda df:' '.join(df['text']))
+    return line_words.values
 
 
-def show_boxes(img, scale=1):
-    img = get_color(img)
-    h = img.shape[0]
-    boxes = pytesseract.image_to_boxes(img) 
-    for b in boxes.splitlines():
-        b = b.split(' ')
-        img = cv2.rectangle(img, (int(b[1]), h - int(b[2])), (int(b[3]), h - int(b[4])), (0, 255, 0), 2)
-    show([img], scale=scale)
+def show_boxes(img, df_ocr, level=5, scale=0.8):
+    col_img = get_color(img)
+    for _,row in df_ocr[df_ocr.level == level].iterrows():
+        beg = (row['left'], row['top'])
+        end = (row['left'] + row['width'], row['top']+row['height'])
+        col_img = cv2.rectangle(col_img, beg, end, (0, 255, 0), 2)
+    show([col_img], scale=scale)
 
 
-def print_ocr(img, custom_config='-l fra --oem 3 --psm 6'):
+def print_ocr(img, custom_config=CONFIG):
     print(get_ocr(img, custom_config))
 
 
-def get_ocr(img, custom_config='-l fra --oem 3 --psm 6'):
+def get_ocr(img, custom_config=CONFIG):
     return pytesseract.image_to_data(img, output_type=pytesseract.Output.DATAFRAME, config=custom_config)
