@@ -4,7 +4,7 @@ from img_utils import get_color, show
 import matplotlib.pyplot as plt
 
 BASE_CONFIG = '-l fra --oem 3 --psm 6'
-TARGET_DPI = 300
+TARGET_DPI = 1000
 CONFIG = BASE_CONFIG + f' --dpi {TARGET_DPI:.0f}'
 
 
@@ -14,7 +14,7 @@ def postprocess_ocr(df_ocr):
     return df_ocr
 
 
-def rm_weird_height(df_ocr, low_rtol=0.6, high_rtol = 2, v=True):
+def rm_weird_height(df_ocr, low_rtol=0.6, high_rtol = 2, v=0):
     median_word_height = df_ocr[df_ocr.level == 5].height.median()
     if v:
         mask = df_ocr.level == 5

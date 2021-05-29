@@ -3,6 +3,7 @@ import numpy as np
 import re
 
 PRODUCT_CATEGORIES = [
+    'DIVERS',
     'BOUCHERIE/TRAITEUR', 
     'ENTRETIEN/BAZAR', 
     'EPICERIE/BOISSONS', 

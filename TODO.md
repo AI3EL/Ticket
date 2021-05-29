@@ -1,4 +1,9 @@
 
+### Preprocessing
+
+- Overall, when letters are not full (lack of ink), tesseract is very bad
+
+
 ### Custom Font
 
 - Not urgent but could be nice: train on custom font: https://pretius.com/how-to-prepare-training-files-for-tesseract-ocr-and-improve-characters-recognition/
@@ -20,7 +25,8 @@
 ### Other
 
 - implement word distance: issue that we have abrevitaions
-- Rethink removing trailing dots
+- Look at : https://github.com/phdenzel/pentaplex/blob/master/receipt.py
+- nice googles: 'receipt ocr preprocessing'
 
 ### Long term
 
