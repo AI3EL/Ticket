@@ -1,4 +1,4 @@
-from img_utils import blur, get_color, get_grayscale, normalize, resize, show, to_bin
+from img_utils import blur, denormalize, dilate, get_color, get_grayscale, normalize, resize, show, to_bin
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,11 +8,11 @@ import imutils
 
 TICKET_WIDTH_CM = 7.
 TICKET_WIDTH_IN = TICKET_WIDTH_CM * 0.3937
-CROP_LEFT = 90/300
-CROP_RIGHT = 50/300
-TOP_CROP_ADD = 50/300
-BOTTOM_CROP_ADD = 50/300
-DOT_SPACING = 17.75/300
+CROP_LEFT_IN = 90/300
+CROP_RIGHT_IN = 50/300
+TOP_CROP_ADD_IN = 50/300
+BOTTOM_CROP_ADD_IN = 50/300
+DOT_SPACING_IN = 17.75/300
 
 def preprocess_ocr(img, target_dpi=None, v=0):
     gray_img = get_grayscale(img)
@@ -79,8 +79,8 @@ def get_dpi(img):
 
 # Removes the T (Monoprix specific)
 def crop_width(img, dpi):
-    xmin = int(CROP_LEFT * dpi)
-    xmax = img.shape[1] - int(CROP_RIGHT * dpi)
+    xmin = int(CROP_LEFT_IN * dpi)
+    xmax = img.shape[1] - int(CROP_RIGHT_IN * dpi)
     return img[:, xmin:xmax]
 
 
@@ -92,16 +92,22 @@ def crop_height(gray_img, dpi, th=120, min_black=20):
     is_black_line = hsum < th
     is_white_line = hsum > th
     if is_black_line[:min_black].all():
-        ymin = is_white_line.argmax() + int(TOP_CROP_ADD * dpi)
+        ymin = is_white_line.argmax() + int(TOP_CROP_ADD_IN * dpi)
     if is_black_line[ymax-min_black].all():
-        ymax -= np.flip(is_white_line).argmax() + int(BOTTOM_CROP_ADD * dpi)
+        ymax -= np.flip(is_white_line).argmax() + int(BOTTOM_CROP_ADD_IN * dpi)
     return gray_img[ymin:ymax]
 
 
-def detect_trailing_dots(img, dot_space=DOT_SPACING, n_space=6, score_th=25):
-    img = normalize(img)
+# TODO: different th for dot and line of dot
+def detect_trailing_dots(img, dpi, target_dpi=300, dot_space=None, n_space=6, score_th=5.0, v=1):
+    assert target_dpi == 300
 
-    h,w = img.shape
+    scaled_img = resize(img, target_dpi/dpi)
+
+    if dot_space is None:
+        dot_space = DOT_SPACING_IN * target_dpi
+
+    h,w = scaled_img.shape
     crop = 15
     
     kernel = np.ones((11,17)) / (11*17-7*5) * 5
@@ -109,25 +115,45 @@ def detect_trailing_dots(img, dot_space=DOT_SPACING, n_space=6, score_th=25):
     kernel[4:7, 6:11] = -1 / (3*5)
     
     line_scores = []
+    convolved = cv2.filter2D(normalize(scaled_img),-1,kernel)
     for shift in range(1, int(dot_space)+1):
         xs = w- shift - crop - (np.arange(n_space)*dot_space).astype(int)
-        convolved = cv2.filter2D(img,-1,kernel)
         line_scores.append(convolved[:, xs].sum(axis=1))
 
     line_scores = np.array(line_scores)
     scores = line_scores.max(axis=0)
     shifts = line_scores.argmax(axis=0)
 
-    plt.plot(scores)
-    plt.show()
+    if v>1:
+        plt.plot(scores)
+        plt.show()
 
-    plt.plot(line_scores.argmax(axis=0))
-    plt.show()
+        plt.plot(line_scores.argmax(axis=0))
+        plt.show()
 
-    return np.array([(y, w-x) for y, (x, score) in enumerate(zip(shifts, scores)) if score > score_th])
+    start_dots = np.array([(y, w-x) for y, (x, score) in enumerate(zip(shifts, scores)) if score > score_th*n_space])
+
+    if not len(start_dots):
+        return False, img
+    to_rm = ((convolved > score_th)*255).astype(np.uint8)
+    dsize = (np.array(img.shape)[:2]).astype(int)
+    to_rm = cv2.resize(to_rm, (dsize[1], dsize[0]), interpolation=cv2.INTER_AREA)
+    _, comps = cv2.connectedComponents(255-img)
+    comps_to_rm = np.unique(np.where(to_rm>127, comps, -1))[2:]  # Should remove -1 and 0
+    print(comps_to_rm)
+    to_erase = (np.isin(comps, comps_to_rm)*255).astype(np.uint8)
+    print(np.unique(to_erase))
+    dilated_to_erase = dilate(to_erase, 5)
+    print(np.unique(dilated_to_erase))
+    to_erase = (255-img)*dilated_to_erase*255
+    print(np.unique(to_erase))
+    out_img = 255-((255-img) - to_erase)
+    if v:
+        show([img, out_img, to_erase])
+    return True, out_img
 
 
-
+ 
 
 # OLD
 

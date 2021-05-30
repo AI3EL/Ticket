@@ -38,6 +38,14 @@ def close(img, s):
     kernel = np.ones((s,s),np.uint8)
     return cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)
 
+def dilate(img, s):
+    kernel = np.ones((s,s),np.uint8)
+    return cv2.morphologyEx(img, cv2.MORPH_DILATE, kernel)
+
 def normalize(img):
     img = (img-img.min()) / (img.max() - img.min())
     return img*2 - 1
+
+def denormalize(img):
+    img = (img-img.min()) / (img.max() - img.min())
+    return img*255

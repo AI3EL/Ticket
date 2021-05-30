@@ -1,3 +1,4 @@
+from img_preproc import detect_trailing_dots
 import pytesseract
 import cv2
 from img_utils import get_color, resize, show
@@ -46,20 +47,22 @@ class MonoprixLineOCR:
 
         line_ocrs = []
         for beg, end in zip(line_starts, line_ends):
-            line_img = gray_img[beg-vpad:end+vpad]
-            df_ocr = self.get_ocr(line_img, self.line_config)
+            line_gray_img = gray_img[beg-vpad:end+vpad]
+            line_bin_img = bin_img[beg-vpad:end+vpad]
+            df_ocr = self.get_ocr(line_gray_img, self.line_config)
             df_words = df_ocr[df_ocr.level == 5]
-            line_type = self.assign_line_type(df_words)
+            line_type, line_bin_img = self.assign_line_type(df_words, line_bin_img)
+
             print(line_type)
 
-            line_img = bin_img[beg-vpad:end+vpad]
+            line_gray_img = bin_img[beg-vpad:end+vpad]
 
             if line_type == 'Article':
-                line_ocrs.append(self.read_article_line(line_img, df_words))
+                line_ocrs.append(self.read_article_line(line_bin_img, df_words))
             if line_type == 'Discount':
-                line_ocrs.append(self.read_discount_line(line_img, df_words))
+                line_ocrs.append(self.read_discount_line(line_bin_img, df_words))
             if line_type == 'Category':
-                line_ocrs.append(self.read_category_line(line_img))
+                line_ocrs.append(self.read_category_line(line_bin_img))
             
             print(line_ocrs[-1])
         return line_ocrs
@@ -91,14 +94,19 @@ class MonoprixLineOCR:
             return (word_left[mask].iloc[0], word_right.iloc[1])
         return None
 
-    def assign_line_type(self, df_words):
+    def assign_line_type(self, df_words, line_bin_img):
+        has_dots, line_bin_img = detect_trailing_dots(line_bin_img, self.dpi)
+        if has_dots:
+            print('Has dots !')
+            return 'Category', line_bin_img
+
         if self.get_box_in(df_words, TOTAL_PRICE_LEFT_IN, TOTAL_PRICE_RIGHT_IN) is not None:
-            return 'Article'
+            return 'Article', line_bin_img
         
         if self.get_box_in(df_words, DISC_PRICE_LEFT_IN, DISC_PRICE_RIGHT_IN) is not None:
-            return 'Discount' 
+            return 'Discount', line_bin_img
         
-        return 'Category'
+        return 'Category', line_bin_img
 
     def get_ocr(self, img, config):
         scaled_img = resize(img, self.ocr_dpi/self.dpi)
