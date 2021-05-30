@@ -2,6 +2,7 @@
 ### Preprocessing
 
 - Overall, when letters are not full (lack of ink), tesseract is very bad
+- Recorrect homography using text lines ? Maybe local homography for each line ? 
 
 
 ### Custom Font
@@ -27,8 +28,15 @@
 - implement word distance: issue that we have abrevitaions
 - Look at : https://github.com/phdenzel/pentaplex/blob/master/receipt.py
 - nice googles: 'receipt ocr preprocessing'
+- try line by line ocr ?
 
 ### Long term
 
 - Know the category of each object to infer category in case it was skipped
 - Curvy lines: https://stackoverflow.com/questions/28935983/preprocessing-image-for-tesseract-ocr-with-opencv
+
+### Ressources:
+ 
+- Removing shadows: https://stackoverflow.com/questions/44752240/how-to-remove-shadow-from-scanned-images-using-opencv
+- https://tesseract-ocr.github.io/tessdoc/ImproveQuality
+- https://groups.google.com/g/tesseract-ocr

@@ -1,4 +1,3 @@
-from tes_ocr import TARGET_DPI
 from img_utils import blur, get_color, get_grayscale, normalize, resize, show, to_bin
 import cv2
 import numpy as np
@@ -15,15 +14,17 @@ TOP_CROP_ADD = 50/300
 BOTTOM_CROP_ADD = 50/300
 DOT_SPACING = 17.75/300
 
-def preprocess_ocr(img, v=0, target_dpi=TARGET_DPI):
+def preprocess_ocr(img, target_dpi=None, v=0):
     gray_img = get_grayscale(img)
     blur_img = blur(gray_img, 5)
     th, bin_img = to_bin(blur_img)
-    contour = detect_ticket(bin_img, 0)
+    contour = detect_ticket(bin_img, v)
     h, status = get_hom_from_cont(img, contour)
 
     ocr_img = cv2.warpPerspective(img, h, (gray_img.shape[1],gray_img.shape[0]))
     dpi = get_dpi(ocr_img)
+    if target_dpi is None:
+        target_dpi = dpi
     if v:
         print(f'DPI: {dpi:.0f}')
     if v > 1:
@@ -32,7 +33,7 @@ def preprocess_ocr(img, v=0, target_dpi=TARGET_DPI):
 
     ocr_img = resize(ocr_img, ocr_scale)
     ocr_img = crop_width(ocr_img, target_dpi)
-    return ocr_img
+    return ocr_img, target_dpi
 
 
 def detect_ticket(bin_img, v=0):
@@ -55,41 +56,45 @@ def get_hom_from_cont(img, contour):
     distance = src_pts[:,0]**2 + src_pts[:,1]**2
     i_roll = -distance.argmin()
     src_pts = np.roll(src_pts, i_roll, 0)
-    distances = np.diff(src_pts, axis=0, append=src_pts[0:1])
-    distances = (distances**2).sum(axis=1)
 
-    # Landscape mode
-    if distances[[0,2]].sum() > distances[[1,3]].sum():
-        # TODO: up or down, other than best ocr results ... ?
-        dst_pts = np.array([(0,0), (0,h), (w,h), (w,0)])
-    else:
-        dst_pts = np.array([(0,0), (0,h), (w,h), (w,0)])
+    edge_len = np.diff(src_pts, axis=0, append=src_pts[0:1])
+    edge_len = (edge_len**2).sum(axis=1)
+
+    dst_pts = np.array([(0,0), (0,h), (w,h), (w,0)])
+
+    # Landscape mode TODO: find up and down
+    if edge_len[[0,2]].sum() < edge_len[[1,3]].sum():
+        dst_pts = np.roll(dst_pts, -1, 0)
 
     homography, status = cv2.findHomography(src_pts, dst_pts)
 
     return homography, status
 
 
+# Finds the dpi of the img, knowing the ticket width
 # img should have the ticket width as width
 def get_dpi(img):
     return img.shape[1]/TICKET_WIDTH_IN
 
 
-def crop_width(img, dpi=TARGET_DPI):
+# Removes the T (Monoprix specific)
+def crop_width(img, dpi):
     xmin = int(CROP_LEFT * dpi)
     xmax = img.shape[1] - int(CROP_RIGHT * dpi)
     return img[:, xmin:xmax]
 
 
-def crop_height(gray_img, dpi = TARGET_DPI, th=120, min_black=20):
+# OLD
+# Crops up and down if there is "a lot of black"
+def crop_height(gray_img, dpi, th=120, min_black=20):
     ymin, ymax = 0, gray_img.shape[0]
     hsum = gray_img.mean(axis=1)
     is_black_line = hsum < th
     is_white_line = hsum > th
     if is_black_line[:min_black].all():
-        ymin = is_white_line.argmax() + int(TOP_CROP_ADD * dpi/TARGET_DPI)
+        ymin = is_white_line.argmax() + int(TOP_CROP_ADD * dpi)
     if is_black_line[ymax-min_black].all():
-        ymax -= np.flip(is_white_line).argmax() + int(BOTTOM_CROP_ADD * dpi/TARGET_DPI)
+        ymax -= np.flip(is_white_line).argmax() + int(BOTTOM_CROP_ADD * dpi)
     return gray_img[ymin:ymax]
 
 
